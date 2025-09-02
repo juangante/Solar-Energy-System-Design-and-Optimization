@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 from datetime import datetime, timedelta
 import math
+import numpy as np
 
 
 def declinacion_solar(date):
@@ -126,57 +127,141 @@ def altitud_solar(latitud, longitud, fecha, omega, declinacion):
     
     return altitud
 
+def comprobaciones():
+    
+    # Parámetros iniciales
+    lat = 40.741895   # Latitud en grados
+    lon = -73.989308   # Longitud en grados
+    fecha_inicial = datetime(2025, 1, 1, 0, 0, 0) # Fecha y hora
+    meridiano = -75.0 # Meridiano oficial de Colombia
+    
+    
+    #### Comprobación de la declinación solar #### 
+    
+    # Generar datos para un año completo
+    fechas = [fecha_inicial + timedelta(days=i) for i in range(365)]
+    declinacion_valores = [declinacion_solar(fecha_inicial) for fecha_inicial in fechas]
+    
+    # Graficar
+    plt.figure(figsize=(8, 5))
+    plt.plot(fechas, declinacion_valores)
+    plt.xlabel("Fecha")
+    plt.ylabel("Declinación solar (grados)")
+    plt.title("Declinación solar a lo largo de un año")
+    plt.grid(True, linestyle='--', alpha=0.6)
+    plt.show()
+    
+    
+    #### Comprobación de la ecuación de tiempo #### 
+    
+    ecuacion_tiempo_valores = [ec_tiempo(fecha) for fecha in fechas]
+    
+    # Graficar
+    plt.figure(figsize=(8, 5))
+    plt.plot(fechas, ecuacion_tiempo_valores)
+    plt.xlabel("Fecha")
+    plt.ylabel("Ecuación del tiempo (Minutos)")
+    plt.title("Ecuación del tiempo a lo largo de un año")
+    plt.grid(True,linestyle='--', alpha=0.6)
+    plt.show()
+    
+    
+    #### Comprobación de la altitud solar #### 
+    
+    # Generar 24 horas (1 día)
+    horas_dia = [fecha_inicial + timedelta(hours=i) for i in range(24)]    
+    
+    altitudes = [altitud_solar(lat, lon, hora, angulo_horario(lon, hora, meridiano), declinacion_solar(fecha_inicial)) for hora in horas_dia]
+    
+    # Graficar
+    plt.figure(figsize=(10, 5))
+    plt.plot(horas_dia, altitudes, marker='o')
+    plt.xlabel("Hora del día")
+    plt.ylabel("Altura solar (°)")
+    plt.title(f"Trayectoria solar en lat:{lat:.2f}, lon:{lon:.2f} ({fecha_inicial.date()})")
+    plt.grid(True, linestyle='--', alpha=0.6)
+    plt.show()
+    
+    #### Comprobación del angulo acimutal solar #### 
+    angulos_acimutales = []
+    # Calcular declinación y ecuación del tiempo para el día
+    declinacion = declinacion_solar(fecha_inicial)
+    # Simular un día completo, hora a hora
+    for hora in horas_dia:  # 24 horas
+    
+        omega = angulo_horario(lon, hora, meridiano)
+        # Ángulo cenital (theta_c)
+        theta_c = angulo_cenital(lat,lon, declinacion, hora, omega)                                                                
+        gamma = angulo_acimutal(lat, declinacion, omega, theta_c)
+        
+        angulos_acimutales.append(gamma)
 
-# Parámetros iniciales
-lat = 40.741895   # Latitud en grados
-lon = -73.989308   # Longitud en grados
-fecha_inicial = datetime(2025, 1, 1, 0, 0, 0) # Fecha y hora
-meridiano = -75.0 # Meridiano oficial de Colombia
+    # Graficar los resultados
+    plt.figure(figsize=(10, 6))
+    plt.plot(angulos_acimutales)
+    plt.title('Ángulo Acimutal Solar a lo largo del día')
+    plt.xlabel('Hora del día (hora local)')
+    plt.ylabel('Ángulo Acimutal ($\gamma$) [grados]')
+    plt.grid(True, linestyle='--', alpha=0.6)
+    plt.xticks(np.arange(0, 25, 2))
+    plt.tight_layout()
+    plt.show()
+    return None
+
+# Ecuación del ángulo cenital (theta_z)
+def angulo_cenital(latitud, longitud, declinacion, hora, omega):
+    """
+    Calcula el ángulo cenital en radianes.
+    """
+    theta_z = math.acos(math.sin(math.radians(latitud)) * math.sin(math.radians(declinacion)) + \
+                  math.cos(math.radians(latitud)) * math.cos(math.radians(declinacion)) * math.cos(omega))
+    return math.degrees(theta_z)
 
 
-#### Comprobación de la declinación solar #### 
+def angulo_acimutal_modificado(latitud, declinacion, omega, theta_c):
+    """
+    Calcula el ángulo acimutal modificado (gamma_prima) en radianes.
 
-# Generar datos para un año completo
-fechas = [fecha_inicial + timedelta(days=i) for i in range(365)]
-declinacion_valores = [declinacion_solar(fecha_inicial) for fecha_inicial in fechas]
+    Args:
+        latitud (float): Latitud en radianes.
+        declinacion (float): Declinación solar en radianes.
+        omega (float): Ángulo horario en radianes.
 
-# Graficar
-plt.figure(figsize=(8, 5))
-plt.plot(fechas, declinacion_valores)
-plt.xlabel("Fecha")
-plt.ylabel("Declinación solar (grados)")
-plt.title("Declinación solar a lo largo de un año")
-plt.grid(True)
-plt.show()
+    Returns:
+        float: El ángulo acimutal modificado en radianes.
+    """
+    # Cálculo de gamma_prima
+    gamma_prima = math.asin((math.cos(math.radians(declinacion)) * math.sin(omega))/math.sin(math.radians(theta_c)))
+    return gamma_prima
+
+def angulo_acimutal(phi, delta, omega, theta_c):
+    """
+    Calcula el ángulo acimutal (gamma) en grados para una fecha, hora y ubicación dadas.
+
+    Args:
+        phi (float): Latitud en grados.
+        delta (float): Declinación solar en grados.
+        omega (float): Ángulo horario en grados.
+
+    Returns:
+        float: El ángulo acimutal en grados.
+    """
+    gamma_prima = angulo_acimutal_modificado(phi, delta, omega, theta_c)
 
 
-#### Comprobación de la ecuación de tiempo #### 
+    # Coeficientes C1, C2 y C3
 
-ecuacion_tiempo_valores = [ec_tiempo(fecha) for fecha in fechas]
+    if abs(delta) < abs(phi):         
+        # Ángulo horario modificado (omega_w)
+        omega_w = math.acos(math.tan(math.radians(delta)) / math.tan(math.radians(phi)))
 
-# Graficar
-plt.figure(figsize=(8, 5))
-plt.plot(fechas, ecuacion_tiempo_valores)
-plt.xlabel("Fecha")
-plt.ylabel("Ecuación del tiempo (Minutos)")
-plt.title("Ecuación del tiempo a lo largo de un año")
-plt.grid(True)
-plt.show()
+        C1 = (omega_w - abs(omega)) / (omega_w - abs(omega))     
+    else: C1 = 1
+    C2 = (phi - delta) / abs(phi - delta)
+    C3 = omega / abs(omega)
 
+    # Ecuación del ángulo acimutal
+    gamma = C1 * C2 * gamma_prima + (180 * C3 * (1 - C1*C2)/2)
+    return math.degrees(gamma)
 
-#### Comprobación de la altitud solar #### 
-
-# Generar 24 horas (1 día)
-horas_dia = [fecha_inicial + timedelta(hours=i) for i in range(24)]    
-
-altitudes = [altitud_solar(lat, lon, hora, angulo_horario(lon, hora, meridiano), declinacion_solar(fecha_inicial)) for hora in horas_dia]
-
-# Graficar
-plt.figure(figsize=(10, 5))
-plt.plot(horas_dia, altitudes, marker='o')
-plt.xlabel("Hora del día")
-plt.ylabel("Altura solar (°)")
-plt.title(f"Trayectoria solar en lat:{lat:.2f}, lon:{lon:.2f} ({fecha_inicial.date()})")
-plt.grid(True)
-plt.show()
-
+comprobaciones()
