@@ -14,7 +14,7 @@ def solar_angles(lat, lon, date, standard_meridian=0):
     delta = classproject1.declinacion_solar(date)
     
     # Ángulo horario (radianes)
-    omega = np.deg2rad(classproject1.angulo_horario(lon, date, standard_meridian))  
+    omega = classproject1.angulo_horario(lon, date, standard_meridian)  
     
     # Ángulo cenital
     theta_z = classproject1.angulo_cenital(lat, lon, delta, date, omega)
@@ -68,7 +68,7 @@ def panel_irradiance(DNI, DHI, GHI, theta_z, theta_s, beta, gamma, rho=0.2):
 # -------------------------------
 # Ejemplo
 # -------------------------------
-lat, lon = 13.268488823253558,-75.56770800028933
+lat, lon = 90.268488823253558,-75.56770800028933
 mer = -75.0
 beta, gamma = 20, 180  # panel inclinado 20°, mirando al sur
 eta, A = 0.18, 1.6     # eficiencia 18%, área 1.6 m²
