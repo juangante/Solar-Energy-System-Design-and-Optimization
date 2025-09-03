@@ -3,7 +3,6 @@ from datetime import datetime, timedelta
 import math
 import numpy as np
 
-
 def declinacion_solar(date):
   """
   Calcula la declinación solar en grados para una fecha dada.
@@ -130,10 +129,10 @@ def altitud_solar(latitud, longitud, fecha, omega, declinacion):
 def comprobaciones():
     
     # Parámetros iniciales
-    lat = 40.741895   # Latitud en grados
-    lon = -73.989308   # Longitud en grados
-    fecha_inicial = datetime(2025, 1, 1, 0, 0, 0) # Fecha y hora
-    meridiano = -75.0 # Meridiano oficial de Colombia
+    lat = 40.435932462951065   # Latitud en grados
+    lon = -3.6989564141131925   # Longitud en grados
+    fecha_inicial = datetime(2025, 6, 21, 0, 0, 0) # Fecha y hora
+    meridiano = 0 # Meridiano oficial de Colombia
     
     
     #### Comprobación de la declinación solar #### 
@@ -264,4 +263,5 @@ def angulo_acimutal(phi, delta, omega, theta_c):
     gamma = C1 * C2 * gamma_prima + (180 * C3 * (1 - C1*C2)/2)
     return math.degrees(gamma)
 
-comprobaciones()
+if __name__ == "__main__":
+    comprobaciones()
