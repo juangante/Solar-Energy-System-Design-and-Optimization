@@ -68,12 +68,18 @@ def panel_irradiance(DNI, DHI, GHI, theta_z, theta_s, beta, gamma, rho=0.2):
 # -------------------------------
 # Ejemplo
 # -------------------------------
-lat, lon = 90.268488823253558,-75.56770800028933
-mer = -75.0
-beta, gamma = 20, 180  # panel inclinado 20°, mirando al sur
-eta, A = 0.18, 1.6     # eficiencia 18%, área 1.6 m²
+lat = int(input("\nIngrese la latitud en grados (°): "))
+lon = int(input("\nIngrese la longitud en grados (°): "))
+mer = int(input("\nIngrese el meridiano oficial en grados (°): "))
+beta = int(input("\nIngrese la inclinación del panel en grados (°): "))
+gamma = int(input("\nIngrese la dirección del panel con respecto al sol en grados (°): "))
+eta = int(input("\nIngrese la eficiencia del panel (%): "))
+A = int(input("\nIngrese el área del panel (m^2): "))    
 
-date = datetime(2025, 8, 21, 0, 0)  # 21 de marzo
+ano = int(input("\nIngrese el año: "))
+mes = int(input("\nIngrese el mes: "))
+dia = int(input("\nIngrese el día: "))
+date = datetime(ano, mes, dia, 0, 0)
 hours = [date + timedelta(hours=i) for i in range(24)]  # 24 horas
 
 POA, Power = [], []
@@ -93,9 +99,12 @@ for h in hours:
 # -------------------------------
 # Gráfica
 # -------------------------------
+    plt.figure(figsize=(8, 5))
 plt.plot([h.hour for h in hours], Power, marker='o')
 plt.xlabel("Hora del día")
 plt.ylabel("Potencia generada (W)")
 plt.title(f"Simulación FV  /  lat: {lat:.2f}°, lon: {lon:.2f}°")
 plt.grid(True)
 plt.show()
+
+plt.close()
